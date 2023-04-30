@@ -1,9 +1,9 @@
-defmodule BlueskyClient.RecordManager do
+defmodule BlueskyEx.Client.RecordManager do
   @moduledoc """
   A module to namespace functions that interact with a Bluesky feed.
   """
 
-  alias BlueskyClient.{RequestUtils, Session}
+  alias BlueskyEx.Client.{RequestUtils, Session}
   alias HTTPoison
 
   @spec create_post(Session.t(), String.t()) :: HTTPoison.Response.t()

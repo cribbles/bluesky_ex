@@ -1,9 +1,9 @@
-defmodule BlueskyClient.Session do
+defmodule BlueskyEx.Client.Session do
   @moduledoc """
   A struct representing a Bluesky session.
   """
 
-  alias BlueskyClient.{Credentials, RequestUtils}
+  alias BlueskyEx.Client.{Credentials, RequestUtils}
   alias HTTPoison
 
   @type t :: %__MODULE__{
@@ -15,7 +15,7 @@ defmodule BlueskyClient.Session do
 
   defstruct [:pds, :access_token, :refresh_token, :did]
 
-  @spec create(Credentials.t(), String.t()) :: BlueskyClient.Session.t()
+  @spec create(Credentials.t(), String.t()) :: BlueskyEx.Client.Session.t()
   def create(%Credentials{username: identifier, password: password}, pds) do
     uri = "#{pds}/xrpc/com.atproto.server.createSession"
 

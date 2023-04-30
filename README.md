@@ -18,10 +18,10 @@ make build
 username = "username"
 password = "password"
 pds = "https://bsky.social"
-creds = %BlueskyClient.Credentials{username: username, password: password}
-session = BlueskyClient.Session.create(creds, pds)
-popular = BlueskyClient.RecordManager.get_popular(session, 2)
-post = BlueskyClient.RecordManager.create_post(session, "skeet")
+creds = %BlueskyEx.Client.Credentials{username: username, password: password}
+session = BlueskyEx.Client.Session.create(creds, pds)
+popular = BlueskyEx.Client.RecordManager.get_popular(session, 2)
+post = BlueskyEx.Client.RecordManager.create_post(session, "skeet")
 ```
 
 ## Contributing

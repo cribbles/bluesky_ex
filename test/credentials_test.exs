@@ -1,8 +1,8 @@
-defmodule BlueskyClient.CredentialsTest do
+defmodule BlueskyEx.Client.CredentialsTest do
   use ExUnit.Case, async: true
-  alias BlueskyClient.Credentials
+  alias BlueskyEx.Client.Credentials
 
-  describe "BlueskyClient.Credentials struct" do
+  describe "BlueskyEx.Client.Credentials struct" do
     test "creates a struct with the expected keys and values" do
       username = "test_user"
       password = "test_password"

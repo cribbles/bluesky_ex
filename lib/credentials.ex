@@ -1,4 +1,4 @@
-defmodule BlueskyClient.Credentials do
+defmodule BlueskyEx.Client.Credentials do
   @moduledoc """
   A struct representing the credentials for a Bluesky user.
   """

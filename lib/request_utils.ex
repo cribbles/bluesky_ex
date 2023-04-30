@@ -1,4 +1,4 @@
-defmodule BlueskyClient.RequestUtils do
+defmodule BlueskyEx.Client.RequestUtils do
   @moduledoc """
   A module to namespace HTTP-related functions.
   """
@@ -10,11 +10,11 @@ defmodule BlueskyClient.RequestUtils do
     [{"Content-Type", "application/json"}]
   end
 
-  @spec default_authenticated_headers(BlueskyClient.Session.t()) :: [
+  @spec default_authenticated_headers(BlueskyEx.Client.Session.t()) :: [
           {String.t(), String.t()},
           ...
         ]
-  def default_authenticated_headers(%BlueskyClient.Session{access_token: access_token}) do
+  def default_authenticated_headers(%BlueskyEx.Client.Session{access_token: access_token}) do
     [{"Authorization", "Bearer #{access_token}"} | default_headers()]
   end
 

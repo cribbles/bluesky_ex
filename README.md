@@ -24,6 +24,12 @@ popular = BlueskyEx.Client.RecordManager.get_popular(session, 2)
 post = BlueskyEx.Client.RecordManager.create_post(session, "skeet")
 ```
 
+You can also play around in the console with all modules preloaded by running
+
+```elixir
+make console
+```
+
 ## Contributing
 
 This project uses [credo](http://credo-ci.org/) and

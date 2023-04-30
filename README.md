@@ -6,6 +6,12 @@ Right now it's in a pretty barebones proof-of-concept state, but as of writing
 there are no other Elixir clients so it's the only game in town. Contributions
 to make it more full-featured are more than welcome :)
 
+## Installation
+
+```sh
+make build
+```
+
 ## Usage
 
 ```elixir
@@ -16,19 +22,6 @@ creds = %BlueskyClient.Credentials{username: username, password: password}
 session = BlueskyClient.Session.create(creds, pds)
 popular = BlueskyClient.RecordManager.get_popular(session, 2)
 post = BlueskyClient.RecordManager.create_post(session, "skeet")
-```
-
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bluesky_ex` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:bluesky_ex, "~> 0.1.0"}
-  ]
-end
 ```
 
 ## Contributing
@@ -49,12 +42,33 @@ mix credo -a --strict
 
 before committing changes.
 
+Typespecs are validated through
+[dialyzer](https://github.com/jeremyjh/dialyxir).
+
+```sh
+mix dialyzer
+```
+
+As a shortcut, you can run
+
+```sh
+make lint
+```
+
+to run all three above commands before authoring a commit.
+
 ### Guidelines
 
 #### Testing
 
 All public functions "should" be tested exhaustively, but coverage is spotty
 right now -- contributions are welcome.
+
+You can run the test suite with
+
+```sh
+make test-unit
+```
 
 #### Documentation
 
@@ -70,13 +84,6 @@ mix docs
 ```
 
 to build the docs and open them in your local environment.
-
-Typespecs are validated through
-[dialyzer](https://github.com/jeremyjh/dialyxir).
-
-```sh
-mix dialyzer
-```
 
 ## License
 

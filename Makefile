@@ -12,5 +12,8 @@ lint:
 	mix credo -a --strict
 	mix dialyzer
 
+publish:
+	mix hex.publish
+
 test-unit:
 	mix test

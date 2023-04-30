@@ -1,18 +1,5 @@
 defmodule BlueskyEx do
   @moduledoc """
-  Documentation for `BlueskyEx`.
+  Placeholder module for the BlueskyEx namespace.
   """
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> BlueskyEx.hello()
-      :world
-
-  """
-  def hello do
-    :world
-  end
 end

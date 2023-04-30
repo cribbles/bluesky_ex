@@ -21,7 +21,7 @@ defmodule BlueskyEx.MixProject do
 
   def description do
     """
-    An Elixir client for Bluesky / AT protocol.
+    An Elixir client for the Bluesky / AT protocol.
     """
   end
 

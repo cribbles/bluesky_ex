@@ -15,25 +15,27 @@ defmodule BlueskyClient.Session do
 
   defstruct [:pds, :access_token, :refresh_token, :did]
 
-  @spec create(Credentials, String.t()) :: BlueskyClient.Session.t()
-  def create(credentials, pds) do
+  @spec create(Credentials.t(), String.t()) :: BlueskyClient.Session.t()
+  def create(%Credentials{username: identifier, password: password}, pds) do
     uri = "#{pds}/xrpc/com.atproto.server.createSession"
 
     request_body =
       Jason.encode!(%{
-        identifier: credentials.username,
-        password: credentials.password
+        identifier: identifier,
+        password: password
       })
 
     headers = RequestUtils.default_headers()
     {:ok, response} = HTTPoison.post(uri, request_body, headers)
-    response_body = Jason.decode!(response.body)
+
+    %{"did" => did, "accessJwt" => access_token, "refreshJwt" => refresh_token} =
+      Jason.decode!(response.body)
 
     %__MODULE__{
       pds: pds,
-      access_token: response_body["accessJwt"],
-      refresh_token: response_body["refreshJwt"],
-      did: response_body["did"]
+      access_token: access_token,
+      refresh_token: refresh_token,
+      did: did
     }
   end
 end

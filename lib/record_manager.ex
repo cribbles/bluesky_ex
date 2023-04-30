@@ -20,7 +20,7 @@ defmodule BlueskyClient.RecordManager do
         }
       })
 
-    uri = RequestUtils.get_create_post_uri(pds)
+    uri = RequestUtils.URI.create_record(pds)
     headers = RequestUtils.default_authenticated_headers(session)
     {:ok, response} = HTTPoison.post(uri, args, headers)
     response
@@ -29,7 +29,7 @@ defmodule BlueskyClient.RecordManager do
   @spec get_popular(Session.t(), Integer) :: HTTPoison.Response.t()
   def get_popular(%Session{pds: pds} = session, n) do
     query = %{"limit" => n}
-    uri = RequestUtils.get_popular_uri(pds, query)
+    uri = RequestUtils.URI.get_popular(pds, query)
     headers = RequestUtils.default_authenticated_headers(session)
     {:ok, response} = HTTPoison.get(uri, headers)
     response

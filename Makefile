@@ -4,6 +4,9 @@ build:
 console:
 	iex -S mix
 
+docs:
+	mix docs
+
 lint:
 	mix format
 	mix credo -a --strict

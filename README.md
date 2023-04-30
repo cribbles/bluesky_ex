@@ -64,7 +64,7 @@ As a shortcut, you can run
 make lint
 ```
 
-to run all three above commands before authoring a commit.
+to run all three of the above commands before authoring a commit.
 
 ### Guidelines
 
@@ -89,7 +89,7 @@ This library uses
 conventions for documentation. You can run
 
 ```sh
-mix docs
+make docs
 ```
 
 to build the docs and open them in your local environment.

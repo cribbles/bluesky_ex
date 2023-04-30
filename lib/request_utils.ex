@@ -5,11 +5,6 @@ defmodule BlueskyClient.RequestUtils do
 
   alias HTTPoison
 
-  @spec resolve_handle(String.t(), String.t()) :: HTTPoison.Response.t()
-  def resolve_handle(pds, username) do
-    HTTPoison.get!("#{pds}/xrpc/com.atproto.identity.resolveHandle?handle=#{username}")
-  end
-
   @spec query_obj_to_query_params(any) :: nonempty_binary
   def query_obj_to_query_params(query) do
     query
@@ -39,21 +34,5 @@ defmodule BlueskyClient.RequestUtils do
         ]
   def default_authenticated_headers(%BlueskyClient.Session{access_token: access_token}) do
     [{"Authorization", "Bearer #{access_token}"} | default_headers()]
-  end
-
-  @spec at_post_link(binary, any) :: String.t()
-  def at_post_link(pds, url) do
-    url = to_string(url)
-
-    unless Regex.match?(
-             ~r{https://[a-zA-Z0-9.-]+/profile/[a-zA-Z0-9.-]+/post/[a-zA-Z0-9.-]+},
-             url
-           ) do
-      raise ArgumentError, message: "The provided URL #{url} does not match the expected schema"
-    end
-
-    [_, _, username, _, post_id] = String.split(url, "/")
-    did = resolve_handle(pds, username)["did"]
-    "at://#{did}/app.bsky.feed.post/#{post_id}"
   end
 end

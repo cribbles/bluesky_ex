@@ -33,6 +33,11 @@ defmodule BlueskyEx.Client.RequestUtils do
       "#{pds}/xrpc/app.bsky.unspecced.getPopular#{query_obj_to_query_params(query)}"
     end
 
+    @spec get_timeline(String.t(), any) :: String.t()
+    def get_timeline(pds, query) do
+      "#{pds}/xrpc/app.bsky.feed.getTimeline#{query_obj_to_query_params(query)}"
+    end
+
     @spec create_record(String.t()) :: String.t()
     def create_record(pds) do
       "#{pds}/xrpc/com.atproto.repo.createRecord"

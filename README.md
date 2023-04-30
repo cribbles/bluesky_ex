@@ -14,20 +14,23 @@ make build
 
 ## Usage
 
+```sh
+make console
+```
+
 ```elixir
 username = "username"
 password = "password"
 pds = "https://bsky.social"
+
 creds = %BlueskyEx.Client.Credentials{username: username, password: password}
 session = BlueskyEx.Client.Session.create(creds, pds)
+
+# Fetch two most recent popular skeets
 popular = BlueskyEx.Client.RecordManager.get_popular(session, 2)
+
+# Make a skeet with the text content "skeet"
 post = BlueskyEx.Client.RecordManager.create_post(session, "skeet")
-```
-
-You can also play around in the console with all modules preloaded by running
-
-```elixir
-make console
 ```
 
 ## Contributing

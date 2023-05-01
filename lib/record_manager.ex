@@ -14,6 +14,10 @@ defmodule BlueskyEx.Client.RecordManager do
   def get_timeline(session, limit),
     do: fetch_data(:get_timeline, session, query: %{"limit" => limit})
 
+  @spec get_profile(Session.t()) :: Response.t()
+  def get_profile(session),
+    do: fetch_data(:get_profile, session, query: %{"actor" => session.did})
+
   @spec create_post(Session.t(), String.t()) :: Response.t()
   def create_post(session, text),
     do:
@@ -31,7 +35,8 @@ defmodule BlueskyEx.Client.RecordManager do
           })
       )
 
-  @spec fetch_data(atom(), Session.t(), list()) :: Response.t()
+  @type options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
+  @spec fetch_data(atom(), Session.t(), options) :: Response.t()
   defp fetch_data(request_type, %Session{pds: pds} = session, options) do
     query = options[:query]
     body = options[:body]

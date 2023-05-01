@@ -6,6 +6,10 @@ defmodule BlueskyEx.Client.RecordManager do
   alias BlueskyEx.Client.{RequestUtils, Session}
   alias HTTPoison.Response
 
+  @spec get_account_invite_codes(Session.t()) :: Response.t()
+  def get_account_invite_codes(session),
+    do: fetch_data(:get_account_invite_codes, session)
+
   @spec get_popular(Session.t(), Keyword.t()) :: Response.t()
   def get_popular(session, opts \\ []),
     do: fetch_data(:get_popular, session, query: build_feed_query(opts))
@@ -37,7 +41,7 @@ defmodule BlueskyEx.Client.RecordManager do
 
   @type options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
   @spec fetch_data(atom(), Session.t(), options) :: Response.t()
-  defp fetch_data(request_type, %Session{pds: pds} = session, options) do
+  defp fetch_data(request_type, %Session{pds: pds} = session, options \\ []) do
     query = options[:query]
     body = options[:body]
 

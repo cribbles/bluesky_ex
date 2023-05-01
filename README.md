@@ -23,11 +23,14 @@ username = "username"
 password = "password"
 pds = "https://bsky.social"
 
-creds = %BlueskyEx.Client.Credentials{username: username, password: password}
+creds = %BlueskyEx.Client.Credentials{
+  username: username,
+  password: password
+}
 session = BlueskyEx.Client.Session.create(creds, pds)
 
 # Fetch 15 skeets from the timeline
-popular = BlueskyEx.Client.RecordManager.get_timeline(session, 15)
+popular = BlueskyEx.Client.RecordManager.get_timeline(session, limit: 15)
 
 # Make a skeet with the text content "skeet"
 post = BlueskyEx.Client.RecordManager.create_post(session, "skeet")

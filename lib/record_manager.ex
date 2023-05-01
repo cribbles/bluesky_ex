@@ -1,3 +1,32 @@
+defmodule BlueskyEx.Client.RecordManager.FetchBuilder do
+  @moduledoc """
+  A helper module to provide generator functions for RecordManager.
+  """
+
+  alias BlueskyEx.Client.Session
+  alias HTTPoison.Response
+
+  @type query_option :: {:query, (Session.t(), Keyword.t() -> any()) | nil}
+  @type body_option :: {:body, (Session.t(), Keyword.t() -> String.t()) | nil}
+  @type options :: [query_option | body_option]
+
+  @spec create_fetch_function(atom(), options) :: any()
+  defmacro create_fetch_function(func, options \\ []) do
+    query_gen = Keyword.get(options, :query, nil)
+    endpoint = Keyword.get(options, :endpoint, func)
+    body_fn = Keyword.get(options, :body, nil)
+
+    quote do
+      @spec unquote(func)(Session.t(), Keyword.t()) :: Response.t()
+      def unquote(func)(session, opts \\ []) do
+        query = generate_fn(unquote(query_gen), session, opts)
+        body = generate_fn(unquote(body_fn), session, opts)
+        fetch_data(unquote(endpoint), session, query: query, body: body)
+      end
+    end
+  end
+end
+
 defmodule BlueskyEx.Client.RecordManager do
   @moduledoc """
   A module to namespace functions that interact with a Bluesky feed.
@@ -6,46 +35,27 @@ defmodule BlueskyEx.Client.RecordManager do
   alias BlueskyEx.Client.{RequestUtils, Session}
   alias HTTPoison.Response
 
-  @spec get_account_invite_codes(Session.t()) :: Response.t()
-  def get_account_invite_codes(session),
-    do: fetch_data(:get_account_invite_codes, session)
+  require BlueskyEx.Client.RecordManager.FetchBuilder
+  import BlueskyEx.Client.RecordManager.FetchBuilder
 
-  @spec get_notifications(Session.t(), Keyword.t()) :: Response.t()
-  def get_notifications(session, opts \\ []),
-    do: fetch_data(:get_notifications, session, query: build_feed_query(opts))
+  # Dialyzer has trouble with generated functions with query params for now.
+  @dialyzer {:nowarn_function, get_notifications: 2}
+  @dialyzer {:nowarn_function, get_popular: 2}
+  @dialyzer {:nowarn_function, get_timeline: 2}
 
-  @spec get_popular(Session.t(), Keyword.t()) :: Response.t()
-  def get_popular(session, opts \\ []),
-    do: fetch_data(:get_popular, session, query: build_feed_query(opts))
+  # READ
+  create_fetch_function(:get_account_invite_codes)
+  create_fetch_function(:get_profile, query: &build_actor_query/2)
+  create_fetch_function(:get_notifications, query: &build_feed_query/2)
+  create_fetch_function(:get_popular, query: &build_feed_query/2)
+  create_fetch_function(:get_timeline, query: &build_feed_query/2)
 
-  @spec get_timeline(Session.t(), Keyword.t()) :: Response.t()
-  def get_timeline(session, opts \\ []),
-    do: fetch_data(:get_timeline, session, query: build_feed_query(opts))
-
-  @spec get_profile(Session.t()) :: Response.t()
-  def get_profile(session),
-    do: fetch_data(:get_profile, session, query: %{"actor" => session.did})
-
-  @spec create_post(Session.t(), String.t()) :: Response.t()
-  def create_post(session, text),
-    do:
-      fetch_data(:create_record, session,
-        body:
-          Jason.encode!(%{
-            "collection" => "app.bsky.feed.post",
-            "$type" => "com.atproto.repo.createRecord",
-            "repo" => session.did,
-            "record" => %{
-              "$type" => "app.bsky.feed.post",
-              "createdAt" => DateTime.utc_now() |> DateTime.to_iso8601(),
-              "text" => text
-            }
-          })
-      )
+  # CREATE
+  create_fetch_function(:create_body, endpoint: :create_record, body: &build_post_body/2)
 
   @type options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
   @spec fetch_data(atom(), Session.t(), options) :: Response.t()
-  defp fetch_data(request_type, %Session{pds: pds} = session, options \\ []) do
+  defp fetch_data(request_type, %Session{pds: pds} = session, options) do
     query = options[:query]
     body = options[:body]
 
@@ -59,11 +69,35 @@ defmodule BlueskyEx.Client.RecordManager do
     RequestUtils.make_request(uri, body: body, session: session)
   end
 
-  @spec build_feed_query(Keyword.t()) :: RequestUtils.URI.query_params()
-  defp build_feed_query(opts) do
+  @spec build_post_body(Session.t(), Keyword.t()) :: String.t()
+  defp build_post_body(session, text: text) do
+    Jason.encode!(%{
+      "collection" => "app.bsky.feed.post",
+      "$type" => "com.atproto.repo.createRecord",
+      "repo" => session.did,
+      "record" => %{
+        "$type" => "app.bsky.feed.post",
+        "createdAt" => DateTime.utc_now() |> DateTime.to_iso8601(),
+        "text" => text
+      }
+    })
+  end
+
+  @spec build_feed_query(Session.t(), Keyword.t()) :: RequestUtils.URI.query_params()
+  defp build_feed_query(_session, opts) do
     algorithm = Keyword.get(opts, :algorithm, "reverse-chronological")
     limit = Keyword.get(opts, :limit, 30)
 
     %{"limit" => limit, "algorithm" => algorithm}
   end
+
+  @spec build_actor_query(Session.t(), Keyword.t()) :: RequestUtils.URI.query_params()
+  defp build_actor_query(session, _opts) do
+    %{"actor" => session.did}
+  end
+
+  defp generate_fn(generator, _session, _opts) when is_nil(generator), do: nil
+
+  defp generate_fn(generator, session, opts) when is_function(generator, 2),
+    do: generator.(session, opts)
 end

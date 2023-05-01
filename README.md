@@ -33,7 +33,7 @@ session = BlueskyEx.Client.Session.create(creds, pds)
 popular = BlueskyEx.Client.RecordManager.get_timeline(session, limit: 15)
 
 # Make a skeet with the text content "skeet"
-post = BlueskyEx.Client.RecordManager.create_post(session, "skeet")
+post = BlueskyEx.Client.RecordManager.create_post(session, text: "skeet")
 ```
 
 ## Contributing

@@ -56,7 +56,7 @@ defmodule BlueskyEx.Client.RecordManager do
       end
 
     uri = apply(RequestUtils.URI, request_type, args)
-    RequestUtils.make_request(uri, body, session)
+    RequestUtils.make_request(uri, body: body, session: session)
   end
 
   @spec build_feed_query(Keyword.t()) :: RequestUtils.URI.query_params()

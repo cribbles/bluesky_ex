@@ -7,34 +7,11 @@ defmodule BlueskyEx.Client.RequestUtils do
   alias HTTPoison.Response
 
   @type headers :: [{String.t(), String.t()}, ...]
-
-  @spec make_request(String.t(), String.t()) :: Response.t()
-  def make_request(uri, body), do: make_request_with_headers(uri, body, default_headers())
-
-  @spec make_request(String.t(), String.t(), Session.t()) :: Response.t()
-  def make_request(uri, body, session),
-    do: make_request_with_headers(uri, body, default_authenticated_headers(session))
-
-  @spec make_request_with_headers(String.t(), String.t(), headers) :: Response.t()
-  def make_request_with_headers(uri, body, headers) do
-    {:ok, response} =
-      case body do
-        nil -> HTTPoison.get(uri, headers)
-        _ -> HTTPoison.post(uri, body, headers)
-      end
-
-    response
-  end
-
-  @spec default_headers :: headers
-  defp default_headers do
-    [{"Content-Type", "application/json"}]
-  end
-
-  @spec default_authenticated_headers(BlueskyEx.Client.Session.t()) :: headers
-  defp default_authenticated_headers(%BlueskyEx.Client.Session{access_token: access_token}) do
-    [{"Authorization", "Bearer #{access_token}"} | default_headers()]
-  end
+  @type method :: :get | :post
+  @type request_opts :: [
+          body: String.t() | nil,
+          session: BlueskyEx.Client.Session.t() | nil
+        ]
 
   defmodule URI.Builder do
     @moduledoc """
@@ -92,5 +69,37 @@ defmodule BlueskyEx.Client.RequestUtils do
       |> Enum.map_join("&", fn {key, value} -> "#{key}=#{value}" end)
       |> (&"?#{&1}").()
     end
+  end
+
+  @spec make_request(URI.uri(), request_opts) :: Response.t()
+  def make_request(uri, opts \\ []) do
+    body = Keyword.get(opts, :body)
+    session = Keyword.get(opts, :session)
+    method = if body, do: :post, else: :get
+    make_request_with_method(method, uri, session, body)
+  end
+
+  @spec make_request_with_method(method, URI.uri(), Session.t() | nil, String.t() | nil) ::
+          Response.t()
+  defp make_request_with_method(method, uri, session, body) do
+    headers = default_headers(session)
+
+    {:ok, response} =
+      case method do
+        :get -> HTTPoison.get(uri, headers)
+        :post -> HTTPoison.post(uri, body, headers)
+      end
+
+    response
+  end
+
+  @spec default_headers :: headers
+  defp default_headers, do: [{"Content-Type", "application/json"}]
+
+  @spec default_headers(Session.t() | nil) :: headers
+  defp default_headers(session) when is_nil(session), do: default_headers()
+
+  defp default_headers(%BlueskyEx.Client.Session{access_token: access_token}) do
+    [{"Authorization", "Bearer #{access_token}"} | default_headers()]
   end
 end

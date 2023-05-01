@@ -19,7 +19,7 @@ defmodule BlueskyEx.Client.Session do
   def create(%Credentials{username: identifier, password: password}, pds) do
     body = Jason.encode!(%{identifier: identifier, password: password})
     uri = RequestUtils.URI.create_session(pds)
-    response = RequestUtils.make_request(uri, body)
+    response = RequestUtils.make_request(uri, body: body)
 
     %{"did" => did, "accessJwt" => access_token, "refreshJwt" => refresh_token} =
       Jason.decode!(response.body)

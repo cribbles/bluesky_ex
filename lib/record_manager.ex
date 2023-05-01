@@ -6,13 +6,13 @@ defmodule BlueskyEx.Client.RecordManager do
   alias BlueskyEx.Client.{RequestUtils, Session}
   alias HTTPoison.Response
 
-  @spec get_popular(Session.t(), Integer) :: Response.t()
-  def get_popular(session, limit),
-    do: fetch_data(:get_popular, session, query: %{"limit" => limit})
+  @spec get_popular(Session.t(), Keyword.t()) :: Response.t()
+  def get_popular(session, opts \\ []),
+    do: fetch_data(:get_popular, session, query: build_feed_query(opts))
 
-  @spec get_timeline(Session.t(), Integer) :: Response.t()
-  def get_timeline(session, limit),
-    do: fetch_data(:get_timeline, session, query: %{"limit" => limit})
+  @spec get_timeline(Session.t(), Keyword.t()) :: Response.t()
+  def get_timeline(session, opts \\ []),
+    do: fetch_data(:get_timeline, session, query: build_feed_query(opts))
 
   @spec get_profile(Session.t()) :: Response.t()
   def get_profile(session),
@@ -62,5 +62,13 @@ defmodule BlueskyEx.Client.RecordManager do
       end
 
     response
+  end
+
+  @spec build_feed_query(Keyword.t()) :: RequestUtils.URI.query_params()
+  defp build_feed_query(opts) do
+    algorithm = Keyword.get(opts, :algorithm, "reverse-chronological")
+    limit = Keyword.get(opts, :limit, 30)
+
+    %{"limit" => limit, "algorithm" => algorithm}
   end
 end

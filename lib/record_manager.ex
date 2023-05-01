@@ -10,6 +10,10 @@ defmodule BlueskyEx.Client.RecordManager do
   def get_account_invite_codes(session),
     do: fetch_data(:get_account_invite_codes, session)
 
+  @spec get_notifications(Session.t(), Keyword.t()) :: Response.t()
+  def get_notifications(session, opts \\ []),
+    do: fetch_data(:get_notifications, session, query: build_feed_query(opts))
+
   @spec get_popular(Session.t(), Keyword.t()) :: Response.t()
   def get_popular(session, opts \\ []),
     do: fetch_data(:get_popular, session, query: build_feed_query(opts))

@@ -55,6 +55,7 @@ defmodule BlueskyEx.Client.RequestUtils do
 
     # GET
     build_uri(:get_account_invite_codes, "com.atproto.server.getAccountInviteCodes", [:pds])
+    build_uri(:get_notifications, "app.bsky.notification.listNotifications", [:pds, :query])
     build_uri(:get_popular, "app.bsky.unspecced.getPopular", [:pds, :query])
     build_uri(:get_profile, "app.bsky.actor.getProfile", [:pds, :query])
     build_uri(:get_timeline, "app.bsky.feed.getTimeline", [:pds, :query])

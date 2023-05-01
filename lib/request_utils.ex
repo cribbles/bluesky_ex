@@ -3,17 +3,36 @@ defmodule BlueskyEx.Client.RequestUtils do
   A module to namespace HTTP-related functions.
   """
 
-  alias HTTPoison
+  alias BlueskyEx.Client.Session
+  alias HTTPoison.Response
 
   @type headers :: [{String.t(), String.t()}, ...]
 
+  @spec make_request(String.t(), String.t()) :: Response.t()
+  def make_request(uri, body), do: make_request_with_headers(uri, body, default_headers())
+
+  @spec make_request(String.t(), String.t(), Session.t()) :: Response.t()
+  def make_request(uri, body, session),
+    do: make_request_with_headers(uri, body, default_authenticated_headers(session))
+
+  @spec make_request_with_headers(String.t(), String.t(), headers) :: Response.t()
+  def make_request_with_headers(uri, body, headers) do
+    {:ok, response} =
+      case body do
+        nil -> HTTPoison.get(uri, headers)
+        _ -> HTTPoison.post(uri, body, headers)
+      end
+
+    response
+  end
+
   @spec default_headers :: headers
-  def default_headers do
+  defp default_headers do
     [{"Content-Type", "application/json"}]
   end
 
   @spec default_authenticated_headers(BlueskyEx.Client.Session.t()) :: headers
-  def default_authenticated_headers(%BlueskyEx.Client.Session{access_token: access_token}) do
+  defp default_authenticated_headers(%BlueskyEx.Client.Session{access_token: access_token}) do
     [{"Authorization", "Bearer #{access_token}"} | default_headers()]
   end
 

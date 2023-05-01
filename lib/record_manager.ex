@@ -56,20 +56,7 @@ defmodule BlueskyEx.Client.RecordManager do
       end
 
     uri = apply(RequestUtils.URI, request_type, args)
-    make_request(session, uri, body)
-  end
-
-  @spec make_request(Session.t(), String.t(), String.t()) :: Response.t()
-  defp make_request(session, uri, body) do
-    headers = RequestUtils.default_authenticated_headers(session)
-
-    {:ok, response} =
-      case body do
-        nil -> HTTPoison.get(uri, headers)
-        _ -> HTTPoison.post(uri, body, headers)
-      end
-
-    response
+    RequestUtils.make_request(uri, body, session)
   end
 
   @spec build_feed_query(Keyword.t()) :: RequestUtils.URI.query_params()

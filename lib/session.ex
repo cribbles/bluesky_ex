@@ -17,16 +17,9 @@ defmodule BlueskyEx.Client.Session do
 
   @spec create(Credentials.t(), String.t()) :: BlueskyEx.Client.Session.t()
   def create(%Credentials{username: identifier, password: password}, pds) do
-    uri = "#{pds}/xrpc/com.atproto.server.createSession"
-
-    request_body =
-      Jason.encode!(%{
-        identifier: identifier,
-        password: password
-      })
-
-    headers = RequestUtils.default_headers()
-    {:ok, response} = HTTPoison.post(uri, request_body, headers)
+    body = Jason.encode!(%{identifier: identifier, password: password})
+    uri = RequestUtils.URI.create_session(pds)
+    response = RequestUtils.make_request(uri, body)
 
     %{"did" => did, "accessJwt" => access_token, "refreshJwt" => refresh_token} =
       Jason.decode!(response.body)

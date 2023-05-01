@@ -5,15 +5,14 @@ defmodule BlueskyEx.Client.RequestUtils do
 
   alias HTTPoison
 
-  @spec default_headers :: [{String.t(), String.t()}]
+  @type headers :: [{String.t(), String.t()}, ...]
+
+  @spec default_headers :: headers
   def default_headers do
     [{"Content-Type", "application/json"}]
   end
 
-  @spec default_authenticated_headers(BlueskyEx.Client.Session.t()) :: [
-          {String.t(), String.t()},
-          ...
-        ]
+  @spec default_authenticated_headers(BlueskyEx.Client.Session.t()) :: headers
   def default_authenticated_headers(%BlueskyEx.Client.Session{access_token: access_token}) do
     [{"Authorization", "Bearer #{access_token}"} | default_headers()]
   end

@@ -112,6 +112,7 @@ defmodule BlueskyEx.Client.RecordManager do
     })
   end
 
+  @spec timestamp_now :: String.t()
   defp timestamp_now do
     DateTime.utc_now() |> DateTime.to_iso8601()
   end

@@ -59,7 +59,7 @@ defmodule BlueskyEx.Client.RecordManager do
   create_fetch_function(:get_timeline, feed_query_opts, query: &build_feed_query/2)
 
   # CREATE
-  create_fetch_function(:create_body, post_query_opts,
+  create_fetch_function(:create_post, post_query_opts,
     endpoint: :create_record,
     body: &build_post_body/2
   )
@@ -107,8 +107,10 @@ defmodule BlueskyEx.Client.RecordManager do
     %{"actor" => session.did}
   end
 
-  @spec generate_fn(Function.t(), Session.t(), Keyword.t()) :: any()
+  @typep generator :: (Session.t(), Keyword.t() -> any())
+  @spec generate_fn(generator | nil, Session.t(), Keyword.t()) :: any()
   defp generate_fn(generator, _session, _opts) when is_nil(generator), do: nil
+
   defp generate_fn(generator, session, opts) when is_function(generator, 2),
     do: generator.(session, opts)
 end

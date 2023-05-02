@@ -64,7 +64,7 @@ defmodule BlueskyEx.Client.RecordManager do
     body: &build_post_body/2
   )
 
-  @type fetch_options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
+  @typep fetch_options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
   @spec fetch_data(atom(), Session.t(), fetch_options) :: Response.t()
   defp fetch_data(request_type, %Session{pds: pds} = session, options) do
     query = options[:query]

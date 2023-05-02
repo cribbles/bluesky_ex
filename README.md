@@ -14,7 +14,7 @@ make build
 
 ## Usage
 
-Here's an example CLI session:
+Here's an example CLI session!
 
 ```sh
 make console

@@ -107,8 +107,8 @@ defmodule BlueskyEx.Client.RecordManager do
     %{"actor" => session.did}
   end
 
+  @spec generate_fn(Function.t(), Session.t(), Keyword.t()) :: any()
   defp generate_fn(generator, _session, _opts) when is_nil(generator), do: nil
-
   defp generate_fn(generator, session, opts) when is_function(generator, 2),
     do: generator.(session, opts)
 end

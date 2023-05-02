@@ -3,9 +3,6 @@
 This is an Elixir client for the [Bluesky](https://blueskyweb.xyz/) /
 [AT protocol](https://atproto.com/).
 
-Right now it's in a pretty barebones proof-of-concept state. Contributions
-to make it more full-featured are more than welcome :)
-
 ## Installation
 
 ```sh
@@ -13,6 +10,8 @@ make build
 ```
 
 ## Usage
+
+Here's an example CLI session:
 
 ```sh
 make console
@@ -36,7 +35,13 @@ popular = BlueskyEx.Client.RecordManager.get_timeline(session, limit: 15)
 post = BlueskyEx.Client.RecordManager.create_post(session, text: "skeet")
 ```
 
+### API reference
+
+See [Hexdocs](https://hexdocs.pm/bluesky_ex).
+
 ## Contributing
+
+### Formatting
 
 This project uses [credo](http://credo-ci.org/) and
 [formatter](https://hexdocs.pm/mix/master/Mix.Tasks.Format.html) for style
@@ -54,12 +59,16 @@ mix credo -a --strict
 
 before committing changes.
 
+### Type checking
+
 Typespecs are validated through
 [dialyzer](https://github.com/jeremyjh/dialyxir).
 
 ```sh
 mix dialyzer
 ```
+
+### Helpers
 
 As a shortcut, you can run
 

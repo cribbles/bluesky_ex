@@ -6,6 +6,7 @@ console:
 
 docs:
 	mix docs
+	open doc/index.html
 
 lint:
 	mix format

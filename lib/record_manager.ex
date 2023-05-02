@@ -6,21 +6,21 @@ defmodule BlueskyEx.Client.RecordManager.FetchBuilder do
   alias BlueskyEx.Client.Session
   alias HTTPoison.Response
 
-  @type query_option :: {:query, (Session.t(), Keyword.t() -> any()) | nil}
-  @type body_option :: {:body, (Session.t(), Keyword.t() -> String.t()) | nil}
-  @type options :: [query_option | body_option]
+  @type query_opt :: {:query, (Session.t(), Keyword.t() -> any()) | nil}
+  @type body_opt :: {:body, (Session.t(), Keyword.t() -> String.t()) | nil}
+  @type macro_opts :: [query_opt | body_opt]
 
-  @spec create_fetch_function(atom(), options) :: any()
-  defmacro create_fetch_function(func, options \\ []) do
-    query_gen = Keyword.get(options, :query, nil)
-    endpoint = Keyword.get(options, :endpoint, func)
-    body_fn = Keyword.get(options, :body, nil)
+  @spec create_fetch_function(atom(), Macro.t(), macro_opts) :: any()
+  defmacro create_fetch_function(func, func_opts_type \\ [], opts \\ []) do
+    query_fn = Keyword.get(opts, :query, nil)
+    body_fn = Keyword.get(opts, :body, nil)
+    endpoint = Keyword.get(opts, :endpoint, func)
 
     quote do
-      @spec unquote(func)(Session.t(), Keyword.t()) :: Response.t()
-      def unquote(func)(session, opts \\ []) do
-        query = generate_fn(unquote(query_gen), session, opts)
-        body = generate_fn(unquote(body_fn), session, opts)
+      @spec unquote(func)(Session.t(), unquote(func_opts_type)) :: Response.t()
+      def unquote(func)(session, options \\ []) do
+        query = generate_fn(unquote(query_fn), session, options)
+        body = generate_fn(unquote(body_fn), session, options)
         fetch_data(unquote(endpoint), session, query: query, body: body)
       end
     end
@@ -38,6 +38,14 @@ defmodule BlueskyEx.Client.RecordManager do
   require BlueskyEx.Client.RecordManager.FetchBuilder
   import BlueskyEx.Client.RecordManager.FetchBuilder
 
+  @type feed_query_opts :: [
+          limit: non_neg_integer(),
+          algorithm: String.t()
+        ]
+  @type post_query_opts :: [
+          text: String.t()
+        ]
+
   # Dialyzer has trouble with generated functions with query params for now.
   @dialyzer {:nowarn_function, get_notifications: 2}
   @dialyzer {:nowarn_function, get_popular: 2}
@@ -45,16 +53,19 @@ defmodule BlueskyEx.Client.RecordManager do
 
   # READ
   create_fetch_function(:get_account_invite_codes)
-  create_fetch_function(:get_profile, query: &build_actor_query/2)
-  create_fetch_function(:get_notifications, query: &build_feed_query/2)
-  create_fetch_function(:get_popular, query: &build_feed_query/2)
-  create_fetch_function(:get_timeline, query: &build_feed_query/2)
+  create_fetch_function(:get_profile, [], query: &build_actor_query/2)
+  create_fetch_function(:get_notifications, feed_query_opts, query: &build_feed_query/2)
+  create_fetch_function(:get_popular, feed_query_opts, query: &build_feed_query/2)
+  create_fetch_function(:get_timeline, feed_query_opts, query: &build_feed_query/2)
 
   # CREATE
-  create_fetch_function(:create_body, endpoint: :create_record, body: &build_post_body/2)
+  create_fetch_function(:create_body, post_query_opts,
+    endpoint: :create_record,
+    body: &build_post_body/2
+  )
 
-  @type options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
-  @spec fetch_data(atom(), Session.t(), options) :: Response.t()
+  @type fetch_options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
+  @spec fetch_data(atom(), Session.t(), fetch_options) :: Response.t()
   defp fetch_data(request_type, %Session{pds: pds} = session, options) do
     query = options[:query]
     body = options[:body]

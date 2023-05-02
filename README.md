@@ -3,6 +3,9 @@
 This is an Elixir client for the [Bluesky](https://blueskyweb.xyz/) /
 [AT protocol](https://atproto.com/).
 
+Right now it's in a pretty barebones proof-of-concept state. Contributions
+to make it more full-featured are more than welcome :)
+
 ## Installation
 
 ```sh

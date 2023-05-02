@@ -59,9 +59,25 @@ defmodule BlueskyEx.Client.RecordManager do
   create_fetch_function(:get_timeline, feed_query_opts, query: &build_feed_query/2)
 
   # CREATE
-  create_fetch_function(:create_post, post_query_opts,
+  create_fetch_function(:create_post, [text: String.t()],
     endpoint: :create_record,
-    body: &build_post_body/2
+    body: fn session, text: text ->
+      build_body(session, "app.bsky.feed.post", %{text: text})
+    end
+  )
+
+  create_fetch_function(:like, [uri: String.t(), cid: String.t()],
+    endpoint: :create_record,
+    body: fn session, uri: uri, cid: cid ->
+      build_body(session, "app.bsky.feed.like", %{subject: %{uri: uri, cid: cid}})
+    end
+  )
+
+  create_fetch_function(:repost, [uri: String.t(), cid: String.t()],
+    endpoint: :create_record,
+    body: fn session, uri: uri, cid: cid ->
+      build_body(session, "app.bsky.feed.repost", %{subject: %{uri: uri, cid: cid}})
+    end
   )
 
   @typep fetch_options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
@@ -80,18 +96,24 @@ defmodule BlueskyEx.Client.RecordManager do
     RequestUtils.make_request(uri, body: body, session: session)
   end
 
-  @spec build_post_body(Session.t(), Keyword.t()) :: String.t()
-  defp build_post_body(session, text: text) do
+  @spec build_body(Session.t(), String.t(), map()) :: String.t()
+  defp build_body(session, type, fields) do
     Jason.encode!(%{
-      "collection" => "app.bsky.feed.post",
-      "$type" => "com.atproto.repo.createRecord",
-      "repo" => session.did,
-      "record" => %{
-        "$type" => "app.bsky.feed.post",
-        "createdAt" => DateTime.utc_now() |> DateTime.to_iso8601(),
-        "text" => text
-      }
+      collection: type,
+      repo: session.did,
+      record:
+        Map.merge(
+          %{
+            "$type": type,
+            createdAt: timestamp_now()
+          },
+          fields
+        )
     })
+  end
+
+  defp timestamp_now do
+    DateTime.utc_now() |> DateTime.to_iso8601()
   end
 
   @spec build_feed_query(Session.t(), Keyword.t()) :: RequestUtils.URI.query_params()

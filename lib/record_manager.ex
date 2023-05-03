@@ -10,8 +10,8 @@ defmodule BlueskyEx.Client.RecordManager.FetchBuilder do
   @type body_opt :: {:body, (Session.t(), Keyword.t() -> String.t()) | nil}
   @type macro_opts :: [query_opt | body_opt]
 
-  @spec create_action(atom(), Macro.t(), macro_opts) :: any()
-  defmacro create_action(func, func_opts_type \\ [], opts \\ []) do
+  @spec build_action(atom(), Macro.t(), macro_opts) :: any()
+  defmacro build_action(func, func_opts_type \\ [], opts \\ []) do
     query_fn = Keyword.get(opts, :query, nil)
     body_fn = Keyword.get(opts, :body, nil)
     endpoint = Keyword.get(opts, :endpoint, func)
@@ -23,6 +23,32 @@ defmodule BlueskyEx.Client.RecordManager.FetchBuilder do
         body = generate_fn(unquote(body_fn), session, options)
         fetch_data(unquote(endpoint), session, query: query, body: body)
       end
+    end
+  end
+
+  defmacro build_create_and_delete_actions(
+             action_name,
+             create_params,
+             create_body_fn
+           ) do
+    create_action_name = :"create_#{action_name}"
+    delete_action_name = :"delete_#{action_name}"
+
+    quote do
+      build_action(unquote(create_action_name), unquote(create_params),
+        endpoint: :create_record,
+        body: fn session, args ->
+          create_body = unquote(create_body_fn).(args)
+          build_create_body(session, "app.bsky.feed.#{unquote(action_name)}", create_body)
+        end
+      )
+
+      build_action(unquote(delete_action_name), [rkey: String.t()],
+        endpoint: :delete_record,
+        body: fn session, rkey: rkey ->
+          build_delete_body(session, "app.bsky.feed.#{unquote(action_name)}", %{rkey: rkey})
+        end
+      )
     end
   end
 end
@@ -42,9 +68,6 @@ defmodule BlueskyEx.Client.RecordManager do
           limit: non_neg_integer(),
           algorithm: String.t()
         ]
-  @type post_query_opts :: [
-          text: String.t()
-        ]
 
   # Dialyzer has trouble with generated functions with query params for now.
   @dialyzer {:nowarn_function, get_notifications: 2}
@@ -52,35 +75,35 @@ defmodule BlueskyEx.Client.RecordManager do
   @dialyzer {:nowarn_function, get_timeline: 2}
 
   # READ
-  create_action(:get_account_invite_codes)
-  create_action(:get_profile, [], query: &build_actor_query/2)
-  create_action(:get_notifications, feed_query_opts, query: &build_feed_query/2)
-  create_action(:get_popular, feed_query_opts, query: &build_feed_query/2)
-  create_action(:get_timeline, feed_query_opts, query: &build_feed_query/2)
+  build_action(:get_account_invite_codes)
+  build_action(:get_profile, [], query: &build_actor_query/2)
+  build_action(:get_notifications, feed_query_opts, query: &build_feed_query/2)
+  build_action(:get_popular, feed_query_opts, query: &build_feed_query/2)
+  build_action(:get_timeline, feed_query_opts, query: &build_feed_query/2)
 
   # CREATE
-  create_action(:create_post, [text: String.t()],
-    endpoint: :create_record,
-    body: fn session, text: text ->
-      build_body(session, "app.bsky.feed.post", %{text: text})
-    end
+  build_create_and_delete_actions(
+    :post,
+    [text: String.t()],
+    fn text: text -> %{text: text} end
   )
 
-  create_action(:like, [uri: String.t(), cid: String.t()],
-    endpoint: :create_record,
-    body: fn session, uri: uri, cid: cid ->
-      build_body(session, "app.bsky.feed.like", %{subject: %{uri: uri, cid: cid}})
-    end
+  build_create_and_delete_actions(
+    :like,
+    [uri: String.t(), cid: String.t()],
+    fn uri: uri, cid: cid -> %{subject: %{uri: uri, cid: cid}} end
   )
 
-  create_action(:repost, [uri: String.t(), cid: String.t()],
-    endpoint: :create_record,
-    body: fn session, uri: uri, cid: cid ->
-      build_body(session, "app.bsky.feed.repost", %{subject: %{uri: uri, cid: cid}})
-    end
+  build_create_and_delete_actions(
+    :repost,
+    [uri: String.t(), cid: String.t()],
+    fn uri: uri, cid: cid -> %{subject: %{uri: uri, cid: cid}} end
   )
 
-  @typep fetch_options :: [{:body, String.t()} | {:query, RequestUtils.URI.query_params()}]
+  @typep fetch_options :: [
+           {:body, String.t()}
+           | {:query, RequestUtils.URI.query_params()}
+         ]
   @spec fetch_data(atom(), Session.t(), fetch_options) :: Response.t()
   defp fetch_data(request_type, %Session{pds: pds} = session, options) do
     query = options[:query]
@@ -96,8 +119,8 @@ defmodule BlueskyEx.Client.RecordManager do
     RequestUtils.make_request(uri, body: body, session: session)
   end
 
-  @spec build_body(Session.t(), String.t(), map()) :: String.t()
-  defp build_body(session, type, fields) do
+  @spec build_create_body(Session.t(), String.t(), map()) :: String.t()
+  defp build_create_body(session, type, fields) do
     Jason.encode!(%{
       collection: type,
       repo: session.did,
@@ -110,6 +133,16 @@ defmodule BlueskyEx.Client.RecordManager do
           fields
         )
     })
+  end
+
+  @spec build_delete_body(Session.t(), String.t(), %{rkey: String.t()}) :: String.t()
+  defp build_delete_body(session, type, rkey_field) do
+    %{
+      collection: type,
+      repo: session.did
+    }
+    |> Map.merge(rkey_field)
+    |> Jason.encode!()
   end
 
   @spec timestamp_now :: String.t()

@@ -59,6 +59,9 @@ defmodule BlueskyEx.Client.RequestUtils do
     build_uri(:create_record, "com.atproto.repo.createRecord", [:pds])
     build_uri(:create_session, "com.atproto.server.createSession", [:pds])
 
+    # DELETE
+    build_uri(:delete_record, "com.atproto.repo.deleteRecord", [:pds])
+
     @spec build_base_uri(pds, String.t()) :: uri
     defp build_base_uri(pds, endpoint), do: "#{pds}/xrpc/#{endpoint}"
 
@@ -76,12 +79,6 @@ defmodule BlueskyEx.Client.RequestUtils do
     body = Keyword.get(opts, :body)
     session = Keyword.get(opts, :session)
     method = if body, do: :post, else: :get
-    make_request_with_method(method, uri, session, body)
-  end
-
-  @spec make_request_with_method(method, URI.uri(), Session.t() | nil, String.t() | nil) ::
-          Response.t()
-  defp make_request_with_method(method, uri, session, body) do
     headers = default_headers(session)
 
     {:ok, response} =

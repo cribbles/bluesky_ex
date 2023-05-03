@@ -10,8 +10,8 @@ defmodule BlueskyEx.Client.RecordManager.FetchBuilder do
   @type body_opt :: {:body, (Session.t(), Keyword.t() -> String.t()) | nil}
   @type macro_opts :: [query_opt | body_opt]
 
-  @spec create_fetch_function(atom(), Macro.t(), macro_opts) :: any()
-  defmacro create_fetch_function(func, func_opts_type \\ [], opts \\ []) do
+  @spec create_action(atom(), Macro.t(), macro_opts) :: any()
+  defmacro create_action(func, func_opts_type \\ [], opts \\ []) do
     query_fn = Keyword.get(opts, :query, nil)
     body_fn = Keyword.get(opts, :body, nil)
     endpoint = Keyword.get(opts, :endpoint, func)
@@ -52,28 +52,28 @@ defmodule BlueskyEx.Client.RecordManager do
   @dialyzer {:nowarn_function, get_timeline: 2}
 
   # READ
-  create_fetch_function(:get_account_invite_codes)
-  create_fetch_function(:get_profile, [], query: &build_actor_query/2)
-  create_fetch_function(:get_notifications, feed_query_opts, query: &build_feed_query/2)
-  create_fetch_function(:get_popular, feed_query_opts, query: &build_feed_query/2)
-  create_fetch_function(:get_timeline, feed_query_opts, query: &build_feed_query/2)
+  create_action(:get_account_invite_codes)
+  create_action(:get_profile, [], query: &build_actor_query/2)
+  create_action(:get_notifications, feed_query_opts, query: &build_feed_query/2)
+  create_action(:get_popular, feed_query_opts, query: &build_feed_query/2)
+  create_action(:get_timeline, feed_query_opts, query: &build_feed_query/2)
 
   # CREATE
-  create_fetch_function(:create_post, [text: String.t()],
+  create_action(:create_post, [text: String.t()],
     endpoint: :create_record,
     body: fn session, text: text ->
       build_body(session, "app.bsky.feed.post", %{text: text})
     end
   )
 
-  create_fetch_function(:like, [uri: String.t(), cid: String.t()],
+  create_action(:like, [uri: String.t(), cid: String.t()],
     endpoint: :create_record,
     body: fn session, uri: uri, cid: cid ->
       build_body(session, "app.bsky.feed.like", %{subject: %{uri: uri, cid: cid}})
     end
   )
 
-  create_fetch_function(:repost, [uri: String.t(), cid: String.t()],
+  create_action(:repost, [uri: String.t(), cid: String.t()],
     endpoint: :create_record,
     body: fn session, uri: uri, cid: cid ->
       build_body(session, "app.bsky.feed.repost", %{subject: %{uri: uri, cid: cid}})

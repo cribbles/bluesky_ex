@@ -69,11 +69,6 @@ defmodule BlueskyEx.Client.RecordManager do
           algorithm: String.t()
         ]
 
-  # Dialyzer has trouble with generated functions with query params for now.
-  @dialyzer {:nowarn_function, get_notifications: 2}
-  @dialyzer {:nowarn_function, get_popular: 2}
-  @dialyzer {:nowarn_function, get_timeline: 2}
-
   # READ
   build_action(:get_account_invite_codes)
   build_action(:get_profile, [], query: &build_actor_query/2)

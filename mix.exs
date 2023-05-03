@@ -45,7 +45,8 @@ defmodule BlueskyEx.MixProject do
       {:jason, "~> 1.3"},
       {:credo, "~> 1.7.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.29.4", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
+      {:mox, "~> 1.0.2", only: :test}
     ]
   end
 end

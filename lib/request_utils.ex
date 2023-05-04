@@ -43,13 +43,14 @@ defmodule BlueskyEx.Client.RequestUtils do
 
     @type pds :: String.t()
     @type uri :: String.t()
-    @type query_params :: %{String.t() => integer() | String.t()}
+    @type query_params :: %{atom() => integer() | String.t()}
 
     require URI.Builder
     import URI.Builder
 
     # GET
     build_uri(:get_account_invite_codes, "com.atproto.server.getAccountInviteCodes", [:pds])
+    build_uri(:get_author_feed, "app.bsky.feed.getAuthorFeed", [:pds, :query])
     build_uri(:get_notifications, "app.bsky.notification.listNotifications", [:pds, :query])
     build_uri(:get_popular, "app.bsky.unspecced.getPopular", [:pds, :query])
     build_uri(:get_profile, "app.bsky.actor.getProfile", [:pds, :query])

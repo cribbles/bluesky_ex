@@ -27,9 +27,16 @@ defmodule BlueskyEx.Client.RecordManager do
   def get_timeline(session, opts \\ []),
     do: fetch_data(:get_timeline, session, query: build_feed_query(opts))
 
+  @spec get_author_feed(Session.t(), Keyword.t()) :: Response.t()
+  def get_author_feed(session, opts \\ []),
+    do:
+      fetch_data(:get_author_feed, session,
+        query: Map.merge(build_feed_query(opts), build_actor_query(session))
+      )
+
   @spec get_profile(Session.t()) :: Response.t()
   def get_profile(session),
-    do: fetch_data(:get_profile, session, query: %{"actor" => session.did})
+    do: fetch_data(:get_profile, session, query: build_actor_query(session))
 
   @spec create_post(Session.t(), text: String.t()) :: Response.t()
   def create_post(session, text: text),
@@ -128,6 +135,11 @@ defmodule BlueskyEx.Client.RecordManager do
     algorithm = Keyword.get(opts, :algorithm, "reverse-chronological")
     limit = Keyword.get(opts, :limit, 30)
 
-    %{"limit" => limit, "algorithm" => algorithm}
+    %{limit: limit, algorithm: algorithm}
+  end
+
+  @spec build_actor_query(Session.t()) :: RequestUtils.URI.query_params()
+  defp build_actor_query(session) do
+    %{actor: session.did}
   end
 end

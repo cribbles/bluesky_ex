@@ -89,6 +89,22 @@ defmodule BlueskyEx.Client.RecordManager do
         body: build_delete_body(session, "app.bsky.feed.repost", rkey)
       )
 
+  @spec create_follow(Session.t(), did: String.t()) :: Response.t()
+  def create_follow(session, did: did),
+    do:
+      fetch_data(:create_follow, session,
+        body:
+          build_create_body(session, "app.bsky.graph.follow", %{subject: %{did: did}})
+      )
+
+  @spec delete_follow(Session.t(), String.t()) :: Response.t()
+  def delete_follow(session, rkey),
+    do:
+      fetch_data(:delete_record, session,
+        body: build_delete_body(session, "app.bsky.graph.follow", rkey)
+      )
+
+
   @typep fetch_options :: [
            {:body, String.t()}
            | {:query, RequestUtils.URI.query_params()}

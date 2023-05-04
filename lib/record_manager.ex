@@ -15,28 +15,35 @@ defmodule BlueskyEx.Client.RecordManager do
   def get_account_invite_codes(session),
     do: fetch_data(:get_account_invite_codes, session)
 
-  @spec get_notifications(Session.t(), Keyword.t()) :: Response.t()
+  @spec get_notifications(Session.t(), limit: integer() | nil, algorithm: String.t() | nil) ::
+          Response.t()
   def get_notifications(session, opts \\ []),
     do: fetch_data(:get_notifications, session, query: build_feed_query(opts))
 
-  @spec get_popular(Session.t(), Keyword.t()) :: Response.t()
+  @spec get_popular(Session.t(), limit: integer() | nil, algorithm: String.t() | nil) ::
+          Response.t()
   def get_popular(session, opts \\ []),
     do: fetch_data(:get_popular, session, query: build_feed_query(opts))
 
-  @spec get_timeline(Session.t(), Keyword.t()) :: Response.t()
+  @spec get_timeline(Session.t(), limit: integer() | nil, algorithm: String.t() | nil) ::
+          Response.t()
   def get_timeline(session, opts \\ []),
     do: fetch_data(:get_timeline, session, query: build_feed_query(opts))
 
-  @spec get_author_feed(Session.t(), Keyword.t()) :: Response.t()
+  @spec get_author_feed(Session.t(),
+          actor: String.t(),
+          limit: integer() | nil,
+          algorithm: String.t() | nil
+        ) :: Response.t()
   def get_author_feed(session, opts \\ []),
     do:
       fetch_data(:get_author_feed, session,
         query: Map.merge(build_feed_query(opts), build_actor_query(session))
       )
 
-  @spec get_profile(Session.t()) :: Response.t()
-  def get_profile(session),
-    do: fetch_data(:get_profile, session, query: build_actor_query(session))
+  @spec get_profile(Session.t(), actor: String.t() | nil) :: Response.t()
+  def get_profile(session, opts \\ []),
+    do: fetch_data(:get_profile, session, query: build_actor_query(session, opts))
 
   @spec create_post(Session.t(), text: String.t()) :: Response.t()
   def create_post(session, text: text),
@@ -138,8 +145,8 @@ defmodule BlueskyEx.Client.RecordManager do
     %{limit: limit, algorithm: algorithm}
   end
 
-  @spec build_actor_query(Session.t()) :: RequestUtils.URI.query_params()
-  defp build_actor_query(session) do
-    %{actor: session.did}
+  @spec build_actor_query(Session.t(), actor: String.t() | nil) :: RequestUtils.URI.query_params()
+  defp build_actor_query(session, opts \\ []) do
+    %{actor: opts[:actor] || session.did}
   end
 end

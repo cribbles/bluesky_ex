@@ -1,58 +1,3 @@
-defmodule BlueskyEx.Client.RecordManager.FetchBuilder do
-  @moduledoc """
-  A helper module to provide generator functions for RecordManager.
-  """
-
-  alias BlueskyEx.Client.Session
-  alias HTTPoison.Response
-
-  @type query_opt :: {:query, (Session.t(), Keyword.t() -> any()) | nil}
-  @type body_opt :: {:body, (Session.t(), Keyword.t() -> String.t()) | nil}
-  @type macro_opts :: [query_opt | body_opt]
-
-  @spec build_action(atom(), Macro.t(), macro_opts) :: any()
-  defmacro build_action(func, func_opts_type \\ [], opts \\ []) do
-    query_fn = Keyword.get(opts, :query, nil)
-    body_fn = Keyword.get(opts, :body, nil)
-    endpoint = Keyword.get(opts, :endpoint, func)
-
-    quote do
-      @spec unquote(func)(Session.t(), unquote(func_opts_type)) :: Response.t()
-      def unquote(func)(session, options \\ []) do
-        query = generate_fn(unquote(query_fn), session, options)
-        body = generate_fn(unquote(body_fn), session, options)
-        fetch_data(unquote(endpoint), session, query: query, body: body)
-      end
-    end
-  end
-
-  defmacro build_create_and_delete_actions(
-             action_name,
-             create_params,
-             create_body_fn
-           ) do
-    create_action_name = :"create_#{action_name}"
-    delete_action_name = :"delete_#{action_name}"
-
-    quote do
-      build_action(unquote(create_action_name), unquote(create_params),
-        endpoint: :create_record,
-        body: fn session, args ->
-          create_body = unquote(create_body_fn).(args)
-          build_create_body(session, "app.bsky.feed.#{unquote(action_name)}", create_body)
-        end
-      )
-
-      build_action(unquote(delete_action_name), [rkey: String.t()],
-        endpoint: :delete_record,
-        body: fn session, rkey: rkey ->
-          build_delete_body(session, "app.bsky.feed.#{unquote(action_name)}", %{rkey: rkey})
-        end
-      )
-    end
-  end
-end
-
 defmodule BlueskyEx.Client.RecordManager do
   @moduledoc """
   A module to namespace functions that interact with a Bluesky feed.
@@ -61,46 +6,80 @@ defmodule BlueskyEx.Client.RecordManager do
   alias BlueskyEx.Client.{RequestUtils, Session}
   alias HTTPoison.Response
 
-  require BlueskyEx.Client.RecordManager.FetchBuilder
-  import BlueskyEx.Client.RecordManager.FetchBuilder
-
   @type feed_query_opts :: [
           limit: non_neg_integer(),
           algorithm: String.t()
         ]
 
-  # READ
-  build_action(:get_account_invite_codes)
-  build_action(:get_profile, [], query: &build_actor_query/2)
-  build_action(:get_notifications, feed_query_opts, query: &build_feed_query/2)
-  build_action(:get_popular, feed_query_opts, query: &build_feed_query/2)
-  build_action(:get_timeline, feed_query_opts, query: &build_feed_query/2)
+  @spec get_account_invite_codes(Session.t()) :: Response.t()
+  def get_account_invite_codes(session),
+    do: fetch_data(:get_account_invite_codes, session)
 
-  # CREATE
-  build_create_and_delete_actions(
-    :post,
-    [text: String.t()],
-    fn text: text -> %{text: text} end
-  )
+  @spec get_notifications(Session.t(), Keyword.t()) :: Response.t()
+  def get_notifications(session, opts \\ []),
+    do: fetch_data(:get_notifications, session, query: build_feed_query(opts))
 
-  build_create_and_delete_actions(
-    :like,
-    [uri: String.t(), cid: String.t()],
-    fn uri: uri, cid: cid -> %{subject: %{uri: uri, cid: cid}} end
-  )
+  @spec get_popular(Session.t(), Keyword.t()) :: Response.t()
+  def get_popular(session, opts \\ []),
+    do: fetch_data(:get_popular, session, query: build_feed_query(opts))
 
-  build_create_and_delete_actions(
-    :repost,
-    [uri: String.t(), cid: String.t()],
-    fn uri: uri, cid: cid -> %{subject: %{uri: uri, cid: cid}} end
-  )
+  @spec get_timeline(Session.t(), Keyword.t()) :: Response.t()
+  def get_timeline(session, opts \\ []),
+    do: fetch_data(:get_timeline, session, query: build_feed_query(opts))
+
+  @spec get_profile(Session.t()) :: Response.t()
+  def get_profile(session),
+    do: fetch_data(:get_profile, session, query: %{"actor" => session.did})
+
+  @spec create_post(Session.t(), text: String.t()) :: Response.t()
+  def create_post(session, text: text),
+    do:
+      fetch_data(:create_record, session,
+        body: build_create_body(session, "app.bsky.feed.post", %{text: text})
+      )
+
+  @spec delete_post(Session.t(), String.t()) :: Response.t()
+  def delete_post(session, rkey),
+    do:
+      fetch_data(:delete_record, session,
+        body: build_delete_body(session, "app.bsky.feed.post", rkey)
+      )
+
+  @spec create_like(Session.t(), uri: String.t(), cid: String.t()) :: Response.t()
+  def create_like(session, uri: uri, cid: cid),
+    do:
+      fetch_data(:create_record, session,
+        body: build_create_body(session, "app.bsky.feed.like", %{subject: %{uri: uri, cid: cid}})
+      )
+
+  @spec delete_like(Session.t(), String.t()) :: Response.t()
+  def delete_like(session, rkey),
+    do:
+      fetch_data(:delete_record, session,
+        body: build_delete_body(session, "app.bsky.feed.like", rkey)
+      )
+
+  @spec create_repost(Session.t(), uri: String.t(), cid: String.t()) :: Response.t()
+  def create_repost(session, uri: uri, cid: cid),
+    do:
+      fetch_data(:create_record, session,
+        body:
+          build_create_body(session, "app.bsky.feed.repost", %{subject: %{uri: uri, cid: cid}})
+      )
+
+  @spec delete_repost(Session.t(), String.t()) :: Response.t()
+  def delete_repost(session, rkey),
+    do:
+      fetch_data(:delete_record, session,
+        body: build_delete_body(session, "app.bsky.feed.repost", rkey)
+      )
 
   @typep fetch_options :: [
            {:body, String.t()}
            | {:query, RequestUtils.URI.query_params()}
          ]
   @spec fetch_data(atom(), Session.t(), fetch_options) :: Response.t()
-  defp fetch_data(request_type, %Session{pds: pds} = session, options) do
+  defp fetch_data(request_type, %Session{pds: pds} = session, options \\ []) do
     query = options[:query]
     body = options[:body]
 
@@ -130,14 +109,13 @@ defmodule BlueskyEx.Client.RecordManager do
     })
   end
 
-  @spec build_delete_body(Session.t(), String.t(), %{rkey: String.t()}) :: String.t()
-  defp build_delete_body(session, type, rkey_field) do
-    %{
+  @spec build_delete_body(Session.t(), String.t(), String.t()) :: String.t()
+  defp build_delete_body(session, type, rkey) do
+    Jason.encode!(%{
       collection: type,
-      repo: session.did
-    }
-    |> Map.merge(rkey_field)
-    |> Jason.encode!()
+      repo: session.did,
+      rkey: rkey
+    })
   end
 
   @spec timestamp_now :: String.t()
@@ -145,23 +123,11 @@ defmodule BlueskyEx.Client.RecordManager do
     DateTime.utc_now() |> DateTime.to_iso8601()
   end
 
-  @spec build_feed_query(Session.t(), Keyword.t()) :: RequestUtils.URI.query_params()
-  defp build_feed_query(_session, opts) do
+  @spec build_feed_query(Keyword.t()) :: RequestUtils.URI.query_params()
+  defp build_feed_query(opts) do
     algorithm = Keyword.get(opts, :algorithm, "reverse-chronological")
     limit = Keyword.get(opts, :limit, 30)
 
     %{"limit" => limit, "algorithm" => algorithm}
   end
-
-  @spec build_actor_query(Session.t(), Keyword.t()) :: RequestUtils.URI.query_params()
-  defp build_actor_query(session, _opts) do
-    %{"actor" => session.did}
-  end
-
-  @typep generator :: (Session.t(), Keyword.t() -> any())
-  @spec generate_fn(generator | nil, Session.t(), Keyword.t()) :: any()
-  defp generate_fn(generator, _session, _opts) when is_nil(generator), do: nil
-
-  defp generate_fn(generator, session, opts) when is_function(generator, 2),
-    do: generator.(session, opts)
 end

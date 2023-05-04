@@ -96,13 +96,7 @@ defmodule BlueskyEx.Client.RecordManager do
   defp fetch_data(request_type, %Session{pds: pds} = session, options \\ []) do
     query = options[:query]
     body = options[:body]
-
-    args =
-      case query do
-        nil -> [pds]
-        _ -> [pds, query]
-      end
-
+    args = [pds | (if query != nil, do: [query], else: [])]
     uri = apply(RequestUtils.URI, request_type, args)
     RequestUtils.make_request(uri, body: body, session: session)
   end

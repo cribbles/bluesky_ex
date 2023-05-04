@@ -7,34 +7,35 @@ defmodule BlueskyEx.Client.RecordManager do
   alias HTTPoison.Response
 
   @type feed_query_opts :: [
-          limit: non_neg_integer(),
-          algorithm: String.t()
+          limit: non_neg_integer() | nil,
+          algorithm: String.t() | nil
         ]
+
+  @feed_query_defaults [
+    limit: 30,
+    algorithm: "reverse-chronological"
+  ]
 
   @spec get_account_invite_codes(Session.t()) :: Response.t()
   def get_account_invite_codes(session),
     do: fetch_data(:get_account_invite_codes, session)
 
-  @spec get_notifications(Session.t(), limit: integer() | nil, algorithm: String.t() | nil) ::
+  @spec get_notifications(Session.t(), feed_query_opts) ::
           Response.t()
   def get_notifications(session, opts \\ []),
     do: fetch_data(:get_notifications, session, query: build_feed_query(opts))
 
-  @spec get_popular(Session.t(), limit: integer() | nil, algorithm: String.t() | nil) ::
+  @spec get_popular(Session.t(), feed_query_opts) ::
           Response.t()
   def get_popular(session, opts \\ []),
     do: fetch_data(:get_popular, session, query: build_feed_query(opts))
 
-  @spec get_timeline(Session.t(), limit: integer() | nil, algorithm: String.t() | nil) ::
+  @spec get_timeline(Session.t(), feed_query_opts) ::
           Response.t()
   def get_timeline(session, opts \\ []),
     do: fetch_data(:get_timeline, session, query: build_feed_query(opts))
 
-  @spec get_author_feed(Session.t(),
-          actor: String.t(),
-          limit: integer() | nil,
-          algorithm: String.t() | nil
-        ) :: Response.t()
+  @spec get_author_feed(Session.t(), actor: String.t() | feed_query_opts) :: Response.t()
   def get_author_feed(session, opts \\ []),
     do:
       fetch_data(:get_author_feed, session,
@@ -96,7 +97,7 @@ defmodule BlueskyEx.Client.RecordManager do
   defp fetch_data(request_type, %Session{pds: pds} = session, options \\ []) do
     query = options[:query]
     body = options[:body]
-    args = [pds | (if query != nil, do: [query], else: [])]
+    args = [pds | if(query != nil, do: [query], else: [])]
     uri = apply(RequestUtils.URI, request_type, args)
     RequestUtils.make_request(uri, body: body, session: session)
   end
@@ -131,12 +132,11 @@ defmodule BlueskyEx.Client.RecordManager do
     DateTime.utc_now() |> DateTime.to_iso8601()
   end
 
-  @spec build_feed_query(Keyword.t()) :: RequestUtils.URI.query_params()
+  @spec build_feed_query(feed_query_opts) :: RequestUtils.URI.query_params()
   defp build_feed_query(opts) do
-    algorithm = Keyword.get(opts, :algorithm, "reverse-chronological")
-    limit = Keyword.get(opts, :limit, 30)
-
-    %{limit: limit, algorithm: algorithm}
+    opts_map = Enum.into(opts, %{})
+    default_map = Enum.into(@feed_query_defaults, %{})
+    Map.merge(default_map, opts_map)
   end
 
   @spec build_actor_query(Session.t(), actor: String.t() | nil) :: RequestUtils.URI.query_params()

@@ -39,7 +39,7 @@ defmodule BlueskyEx.Client.RecordManager do
   def get_author_feed(session, opts \\ []),
     do:
       fetch_data(:get_author_feed, session,
-        query: Map.merge(build_feed_query(opts), build_actor_query(session))
+        query: Map.merge(build_feed_query(opts), build_actor_query(session, opts))
       )
 
   @spec get_profile(Session.t(), actor: String.t() | nil) :: Response.t()
@@ -140,7 +140,7 @@ defmodule BlueskyEx.Client.RecordManager do
   end
 
   @spec build_actor_query(Session.t(), actor: String.t() | nil) :: RequestUtils.URI.query_params()
-  defp build_actor_query(session, opts \\ []) do
+  defp build_actor_query(session, opts) do
     %{actor: opts[:actor] || session.did}
   end
 end
